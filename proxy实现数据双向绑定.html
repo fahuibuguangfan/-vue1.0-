@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>proxy实现数据双向绑定</title>
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        let template = `
+    <div>
+        <input type="text">未绑定v-model输入框<br>
+        <input type="text" v-model = "name">{{name}}<br>
+        <input type="text" v-model = "age">{{age}}
+    </div>
+`;
+
+let _data = {
+    name:'fahui',
+    age:13,
+}
+let data = new Proxy(_data,{
+    get(obj,key){
+        console.log('触发了get')
+        return obj[key];
+    },
+    set(obj,key,value){
+        console.log('触发了set')
+        obj[key]=value;
+        rander()    // 修改数据后重新渲染视图
+    }
+})
+
+let el = document.getElementById('app');
+//初始化渲染视图
+rander();
+//渲染视图
+function rander(){
+    el.innerHTML = template.replace(/\{\{\w+\}\}/g,src =>{  //替换掉{{}}
+        src = src.substring(2,src.length-2);
+        return data[src]
+    });
+    Array.from(document.getElementsByTagName('input'))//获取输入款列表
+    .filter(item=>item.getAttribute('v-model'))// 过滤出有v-model属性的元素
+    .forEach(item=>{                            //遍历各个输入
+            let key = item.getAttribute('v-model');//获取v-model属性值
+            //设置input.value
+            item.value = data[key]                  
+    
+            //输入时修改data 设置输入事件，输入框变化，更新数据
+            item.oninput = function(){
+                data[key] = this.value;
+            //    console.log(data[key])
+            };
+        });
+}
+    </script>
+</body>
+</html>
